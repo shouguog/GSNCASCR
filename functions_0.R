@@ -32,7 +32,7 @@ GSNCAscore = function(cormat1, cormat2){
 
 # Evaluate significance of each set by comparing
 # to set scores after permutation of group labels
-doPermute_seq_correlation = function(sets,seuratObj,genes_selected,type1,type2, returnType="network"){
+doPermute_seq_correlation = function(sets,seuratObj,genes_selected,type1,type2, returnType="network", seedPerm=0){
   metaData<-seuratObj@meta.data
   metaData_type1<-metaData[metaData$Status==type1,]
   metaData_type2<-metaData[metaData$Status==type2,]
@@ -42,9 +42,12 @@ doPermute_seq_correlation = function(sets,seuratObj,genes_selected,type1,type2, 
   }
   metaData_type1type2<-rbind(metaData_type1, metaData_type2)
   ###Start permutation
+  set.seed(seedPerm)
   metaData_type1type2<-metaData_type1type2[sample(1:dim(metaData_type1type2)[1], dim(metaData_type1type2)[1]),]
   metaData_type1_perm<-metaData_type1type2[1:length(metaData_type1),]
   metaData_type2_perm<-metaData_type1type2[1:length(metaData_type1)+length(metaData_type2),]
+  cat(head(rownames(metaData_type1_perm))[1:5])
+  cat(head(rownames(metaData_type2_perm))[1:5])
   ###Get Seurat with samples
   pbmc_B_type1 <- subset(seuratObj, cells = rownames(metaData_type1_perm))
   pbmc_B_type2 <- subset(seuratObj, cells = rownames(metaData_type2_perm))
@@ -103,7 +106,7 @@ runPermute_seq_correlation = function(sets,seuratObj,genes_selected,type1,type2,
     correlation_perm_list<-list()
     for(ii in 1:nPermute){
       cat("############################################");cat(Sys.time());cat("\t");cat(ii); cat("\tperm start\n")
-      correlation_perm_list[[ii]]<-doPermute_seq_correlation(geneset,pbmc_B.sub,genes_selected,"COVID","Healthy", returnType=returnType)
+      correlation_perm_list[[ii]]<-doPermute_seq_correlation(geneset,pbmc_B.sub,genes_selected,"COVID","Healthy", returnType=returnType, seedPerm=ii)
     }
     correlation_perm_list
   }else{
