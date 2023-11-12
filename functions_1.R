@@ -100,7 +100,8 @@ calculate_seq_correlation = function(sets,seuratObj,genes_selected,type1,type2, 
 
 ####The main program of runPermutation
 ####ncores control the pararel or not
-####Seems that parael can not work in windows sometime
+####Seems that parael can not work in windows sometime, need to fix in future
+####Need to redefine function in when ncores>1, need to find other solution
 runPermute_seq_correlation = function(sets,seuratObj,genes_selected,type1,type2, ncores=1,nPermute=6, returnType="network"){
   if(ncores==1){
     correlation_perm_list<-list()
