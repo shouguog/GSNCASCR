@@ -129,6 +129,8 @@ network_plot = function(networklist,name1="status1",name2="status2", fileName=NU
   CSCORE_type2_coexp<-networklist[[2]]
   ####Need copy edit
   library(ggraph)
+  library(dplyr)
+  library(igraph)
   gene1<-c()
   gene2<-c()
   r1<-c()
@@ -138,7 +140,7 @@ network_plot = function(networklist,name1="status1",name2="status2", fileName=NU
       gene1<-c(gene1, rownames(CSCORE_type1_coexp)[ii])
       gene2<-c(gene2, rownames(CSCORE_type1_coexp)[jj])
       r1<-c(r1, as.numeric(CSCORE_type1_coexp[ii,jj]))
-      r2<-c(r2, as.numeric(CSCORE_type1_coexp[ii,jj]))
+      r2<-c(r2, as.numeric(CSCORE_type2_coexp[ii,jj]))
     }
   }
   network_cors_1<-data.frame(x=gene1, y=gene2, r1=r1, r2=r2)
@@ -158,7 +160,7 @@ network_plot = function(networklist,name1="status1",name2="status2", fileName=NU
   ggDiff<-ggDiff + geom_node_text(aes(label = name), repel = TRUE) + labs(title = "Difference") 
   if(!is.null(fileName)){
     png(paste0(fileName, ".png"), width = 9000, height = 3000, res = 200)
-    gridExtra::grid.arrange(gg1, gg2, gg3, ncol=3)
+    gridExtra::grid.arrange(gg1, gg2, ggDiff, ncol=3)
     dev.off()
   }
   return(list(gg1=gg1, gg2=gg2, ggDiff=ggDiff))
