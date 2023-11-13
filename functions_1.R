@@ -44,8 +44,8 @@ doPermute_seq_correlation = function(sets,seuratObj,genes_selected,type1,type2, 
   ###Start permutation
   set.seed(seedPerm)
   metaData_type1type2<-metaData_type1type2[sample(1:dim(metaData_type1type2)[1], dim(metaData_type1type2)[1]),]
-  metaData_type1_perm<-metaData_type1type2[1:length(metaData_type1),]
-  metaData_type2_perm<-metaData_type1type2[1:length(metaData_type1)+length(metaData_type2),]
+  metaData_type1_perm<-metaData_type1type2[1:length(metaData_type1[,1]),]
+  metaData_type2_perm<-metaData_type1type2[1:length(metaData_type1[,1])+length(metaData_type2[,1]),]
   cat(head(rownames(metaData_type1_perm))[1:5])
   cat(head(rownames(metaData_type2_perm))[1:5])
   ###Get Seurat with samples
