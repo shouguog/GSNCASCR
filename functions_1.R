@@ -98,10 +98,77 @@ calculate_seq_correlation = function(sets,seuratObj,genes_selected,type1,type2, 
   }
 }
 
+# Evaluate significance of each set by comparing
+# to set scores after permutation of group labels
+network_seq_correlation = function(pathway,seuratObj,genes_selected,type1,type2, returnType="network"){
+  ###Get the metaData
+  if(length(type1)!=length(type2)){
+    stop("Please keep the sample equal size\n")
+  }
+  metaData<-seuratObj@meta.data
+  metaData_type1<-metaData[metaData$Status==type1,]
+  metaData_type2<-metaData[metaData$Status==type2,]
+  ###Get Seurat with samples
+  pbmc_B_type1 <- subset(seuratObj, cells = rownames(metaData_type1))
+  pbmc_B_type2 <- subset(seuratObj, cells = rownames(metaData_type2))
+  
+  CSCORE_result_type1 <- CSCORE(pbmc_B_type1, genes = genes_selected)
+  CSCORE_result_type2 <- CSCORE(pbmc_B_type2, genes = genes_selected)
+  
+  # Obtain CS-CORE co-expression estimates
+  CSCORE_type1_coexp <- CSCORE_result_type1$est
+  # Obtain CS-CORE co-expression estimates
+  CSCORE_type2_coexp <- CSCORE_result_type2$est
+  CSCORE_type1_coexp<-CSCORE_type1_coexp[rownames(CSCORE_type1_coexp) %in% pathway, colnames(CSCORE_type1_coexp) %in% pathway]
+  CSCORE_type2_coexp<-CSCORE_type2_coexp[rownames(CSCORE_type2_coexp) %in% pathway, colnames(CSCORE_type2_coexp) %in% pathway]
+  list(CSCORE_type1_coexp=CSCORE_type1_coexp, CSCORE_type2_coexp=CSCORE_type2_coexp)
+}
+
+network_plot = function(networklist,name1="status1",name2="status2", fileName=NULL){
+  CSCORE_type1_coexp<-networklist[[1]]
+  CSCORE_type2_coexp<-networklist[[2]]
+  ####Need copy edit
+  library(ggraph)
+  gene1<-c()
+  gene2<-c()
+  r1<-c()
+  r2<-c()
+  for(ii in 1:(dim(CSCORE_type1_coexp)[1]-1)){
+    for(jj in (ii+1):dim(CSCORE_type1_coexp)[1]){
+      gene1<-c(gene1, rownames(CSCORE_type1_coexp)[ii])
+      gene2<-c(gene2, rownames(CSCORE_type1_coexp)[jj])
+      r1<-c(r1, as.numeric(CSCORE_type1_coexp[ii,jj]))
+      r2<-c(r2, as.numeric(CSCORE_type1_coexp[ii,jj]))
+    }
+  }
+  network_cors_1<-data.frame(x=gene1, y=gene2, r1=r1, r2=r2)
+  graph_cors <- network_cors_1 %>% filter((abs(r1)+abs(r2)) > .6) %>% graph_from_data_frame(directed = FALSE)
+  
+  #and here’s one that’s polished to look nicer:
+  gg1<-ggraph(graph_cors) + geom_edge_link(aes(edge_alpha = abs(r1), edge_width = abs(r2), color = r1)) + guides(edge_alpha = "none", edge_width = "none") 
+  gg1<-gg1 + scale_edge_colour_gradientn(limits = c(-1, 1), colors = c("firebrick2", "dodgerblue2")) + geom_node_point(color = "white", size = 5) 
+  gg1<-gg1 + geom_node_text(aes(label = name), repel = TRUE) + labs(title = name1)
+  
+  gg2<-ggraph(graph_cors) + geom_edge_link(aes(edge_alpha = abs(r2), edge_width = abs(r2), color = r2)) + guides(edge_alpha = "none", edge_width = "none") 
+  gg2<-gg2 + scale_edge_colour_gradientn(limits = c(-1, 1), colors = c("firebrick2", "dodgerblue2")) + geom_node_point(color = "white", size = 5) 
+  gg2<-gg2 + geom_node_text(aes(label = name), repel = TRUE) + labs(title = name2) 
+  
+  ggDiff<-ggraph(graph_cors) + geom_edge_link(aes(edge_alpha = abs(r2), edge_width = abs(r2), color = (r2-r1))) + guides(edge_alpha = "none", edge_width = "none") 
+  ggDiff<-ggDiff + scale_edge_colour_gradientn(limits = c(-1, 1), colors = c("firebrick2", "dodgerblue2")) + geom_node_point(color = "white", size = 5) 
+  ggDiff<-ggDiff + geom_node_text(aes(label = name), repel = TRUE) + labs(title = "Difference") 
+  if(!is.null(fileName)){
+    png(paste0(fileName, ".png"), width = 9000, height = 3000, res = 200)
+    gridExtra::grid.arrange(gg1, gg2, gg3, ncol=3)
+    dev.off()
+  }
+  return(list(gg1=gg1, gg2=gg2, ggDiff=ggDiff))
+  ####Need copy edit
+}
+
+
 ####The main program of runPermutation
 ####ncores control the pararel or not
-####Seems that parael can not work in windows sometime, need to fix in future
-####Need to redefine function in when ncores>1, need to find other solution
+####Seems that parael can not work in windows sometime
 runPermute_seq_correlation = function(sets,seuratObj,genes_selected,type1,type2, ncores=1,nPermute=6, returnType="network"){
   if(ncores==1){
     correlation_perm_list<-list()
