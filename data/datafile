@@ -1,1 +1,2 @@
-
+Download blish_covid.seu.rds from https://hosted-matrices-prod.s3-us-west-2.amazonaws.com/Single_cell_atlas_of_peripheral_immune_response_to_SARS_CoV_2_infection-25/blish_covid.seu.rds
+Run the script in README.md to generate pbmc_B.RData
