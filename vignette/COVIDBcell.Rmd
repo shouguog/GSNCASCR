@@ -1,0 +1,184 @@
+---
+title: "Vignette Title"
+author:
+- name: Shouguo Gao
+  affiliation: NHLBI/NIH
+- name: Neal S. Young
+  affiliation: NHLBI/NIH
+  email: shouguo.gao@nih.gov
+output:
+  BiocStyle::html_document
+abstract: |
+  Description of your vignette
+vignette: |
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+This vignette shows an example of applying pathway level to infer cell-type-specific co-expression networks and extracting co-expressed gene modules that are enriched for biological functions in cell types.
+
+# 1. Load packages and data
+
+```{r setup, warning = FALSE, message = FALSE}
+library(CSCORE)
+library(Seurat)
+library(ggraph)
+library(gridExtra)
+source("../R/functions_2.R")
+```
+
+In this vignette, we use the single cell RNA-sequencing data on Peripheral blood mononuclear cells (PBMC) from COVID patients and healthy controls from [Wilk et al.](https://www.nature.com/articles/s41591-020-0944-y), which were also studied in our [manuscript](https://www.biorxiv.org/content/10.1101/2022.12.13.520181v1). This data set can be downloaded via the following bash script
+
+```{r eval = TRUE}
+#wget https://hosted-matrices-prod.s3-us-west-2.amazonaws.com/Single_cell_atlas_of_peripheral_immune_response_to_SARS_CoV_2_infection-25/blish_covid.seu.rds
+cat("dowload")
+```
+
+After downloading blish_covid.seu.rds, we load it into the R session
+
+```{r eval = TRUE}
+####Load the gene set and convert into list
+geneset<-geneIds(getGmt("../data/h.all.v2023.2.Hs.symbols.gmt"))
+pbmc <- readRDS('../data/blish_covid.seu.rds')
+# Use the original UMI counts stored in Assay 'RNA'
+DefaultAssay(pbmc) <- 'RNA'
+```
+
+# 2. Select cell types and gene sets to study
+
+In this example, we focus on B cells and infer the B cell-specific co-expression network.
+
+```{r eval = TRUE}
+pbmc_B = pbmc[,pbmc$cell.type.coarse %in% 'B']
+```
+
+Depending on the biological question of interest, one may choose to study the co-expression network for any gene set. Here, we chose to infer the co-expression network for the genes with meaningful expression levels in B cells (top 5000 among 26361 genes). There are several reasons for our choice:
+
+1.  All genes with moderate to high expression levels provides a comprehensive and unbiased set of genes that could have meaningful biological functions in a cell type.
+
+2.  If the genes have much lower expression levels, it would be statistically more challenging and biologically less interesting to infer their co-expressions, as these genes might have almost all UMI counts equal to 0.
+
+In general, it will be up to the users's choice to select the gene sets to study. We recommend choosing the gene sets that are of interest to your application.
+
+```{r eval = TRUE}
+mean_exp = rowMeans(pbmc_B@assays$RNA@counts/pbmc_B$nCount_RNA)
+genes_selected = names(sort.int(mean_exp, decreasing = T))[1:5000]
+```
+
+# 3. Run `Pathway Level` to infer cell-type-specific co-expression network on the specified gene set
+
+We further subset the B cells to those from healthy control subjects in order to study B-cell specific co-expression network among healthy control B cells.
+
+```{r eval = TRUE}
+metaData<-pbmc_B@meta.data
+metaData_Healthy<-metaData[metaData$Status=="Healthy",]
+metaData_COVID<-metaData[metaData$Status=="COVID",]
+set.seed(666);metaData_COVID<-metaData_COVID[sample(1:dim(metaData_COVID)[1],dim(metaData_Healthy)[1]),]
+```
+
+# 4. Get the Subset of two groups
+
+```{r eval = TRUE}
+pbmc_B.sub<-subset(pbmc_B, cells=c(rownames(metaData_Healthy), rownames(metaData_COVID)))
+rm(pbmc_B)
+```
+
+# 5. Calculate the network, or score of networks
+
+
+```{r eval = TRUE}
+cor_data_score<-calculate_seq_correlation(geneset,pbmc_B.sub,genes_selected,"COVID","Healthy", returnType = "score", scoreMethod = "GSCNCA")
+save(cor_data_score, file = "COVIDHD_cor_data_score.RData")
+```
+
+Next, based on the thresholded co-expression matrix, we apply [WGCNA](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-9-559) to extract co-expressed gene modules. In particular, we use `CS-CORE` estimates to measure co-expressions for single cell RNA-sequencing data, which replace the Pearson correlations used in traditional WGNCA workflow, that suffer from inflated false positives and attenuation bias on single cell data as demonstrated in our [manuscript](https://www.biorxiv.org/content/10.1101/2022.12.13.520181v1).
+
+# 6. Calculate the network, or score of networks for permutations
+
+```{r eval = TRUE}
+cor_data_perm_list<-runPermute_seq_correlation(geneset,pbmc_B.sub,genes_selected,"COVID","Healthy", ncores = 1, nPermute=20, returnType = "score", scoreMethod = "GSCNCA")
+save(cor_data_perm_list, file = "COVIDHD_cor_data_hallmark_perm_list_20.RData")
+```
+
+# 7. Calculate p values
+
+
+```{r eval = TRUE}
+pvalues<-sort(getPvaluesTTest(cor_data_score, cor_data_perm_list))
+save(pvalues, file = "pvaluesTtest.RData")
+```
+
+# 8. Generate the figures for top pathways
+
+```{r eval = TRUE}
+gglist <-list()
+for(ii in 1:1){
+  pathway<-names(pvalues)[ii]  
+  networkslist<-network_seq_correlation(geneset[[pathway]],pbmc_B.sub,genes_selected,"COVID","Healthy")
+  gglist[[ii]]<-network_plot(networkslist,name1="COVID",name2="Healthy", fileName=paste0("rank_",ii, "_", pathway, "_COVID_Healthy_Diff"))
+}
+```
+```{r eval = TRUE}
+for(ii in 2:2){
+  pathway<-names(pvalues)[ii]  
+  networkslist<-network_seq_correlation(geneset[[pathway]],pbmc_B.sub,genes_selected,"COVID","Healthy")
+  gglist[[ii]]<-network_plot(networkslist,name1="COVID",name2="Healthy", fileName=paste0("rank_",ii, "_", pathway, "_positivePNH_Healthy_Diff"))
+}
+```
+```{r eval = TRUE}
+for(ii in 3:3){
+  pathway<-names(pvalues)[ii]  
+  networkslist<-network_seq_correlation(geneset[[pathway]],pbmc_B.sub,genes_selected,"COVID","Healthy")
+  gglist[[ii]]<-network_plot(networkslist,name1="COVID",name2="Healthy", fileName=paste0("rank_",ii, "_", pathway, "_positivePNH_Healthy_Diff"))
+}
+```
+```{r eval = TRUE}
+for(ii in 4:4){
+  pathway<-names(pvalues)[ii]  
+  networkslist<-network_seq_correlation(geneset[[pathway]],pbmc_B.sub,genes_selected,"COVID","Healthy")
+  gglist[[ii]]<-network_plot(networkslist,name1="COVID",name2="Healthy", fileName=paste0("rank_",ii, "_", pathway, "_positivePNH_Healthy_Diff"))
+}
+```
+
+# 9. Show plots
+
+Plot the first pathway.
+
+```{r, fig.width = 20, fig.height = 8}
+  gridExtra::grid.arrange(gglist[[1]]$gg1, gglist[[1]]$gg2, gglist[[1]]$ggDiff, ncol=3)
+```
+
+# 10. Show plots
+
+Plot the second pathway.
+
+```{r, fig.width = 20, fig.height = 8}
+  library(ggraph)
+  gridExtra::grid.arrange(gglist[[2]]$gg1, gglist[[2]]$gg2, gglist[[2]]$ggDiff, ncol=3)
+```
+
+# 11. Show plots
+
+Plot the third pathway.
+
+```{r, fig.width = 20, fig.height = 8}
+  library(ggraph)
+  gridExtra::grid.arrange(gglist[[3]]$gg1, gglist[[3]]$gg2, gglist[[3]]$ggDiff, ncol=3)
+```
+
+# 12. Show plots
+
+Plot the fourth pathway.
+
+```{r, fig.width = 20, fig.height = 8}
+  library(ggraph)
+  gridExtra::grid.arrange(gglist[[4]]$gg1, gglist[[4]]$gg2, gglist[[4]]$ggDiff, ncol=3)
+```
+
+The other Analysis is possible
+# Session info {.unnumbered}
+
+```{r sessionInfo, echo=FALSE}
+sessionInfo()
+```
