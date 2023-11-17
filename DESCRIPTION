@@ -3,7 +3,7 @@ Type: Package
 Title: pathway level co-expression analysis for scRNA-seq data
 Version: 0.1.0
 Author: Shouguo Gao
-Maintainer: Shouguo Gao shouguog@nih.gov
+Maintainer: Shouguo Gao <shouguog@nih.gov>
 Description: The package intrgrate the GSCNA and SCORE to analyze and visualize the co-expression difference.
 License: What license is it under?
 Encoding: UTF-8
