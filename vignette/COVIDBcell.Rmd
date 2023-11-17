@@ -123,21 +123,21 @@ for(ii in 1:1){
 for(ii in 2:2){
   pathway<-names(pvalues)[ii]  
   networkslist<-network_seq_correlation(geneset[[pathway]],pbmc_B.sub,genes_selected,"COVID","Healthy")
-  gglist[[ii]]<-network_plot(networkslist,name1="COVID",name2="Healthy", fileName=paste0("rank_",ii, "_", pathway, "_positivePNH_Healthy_Diff"))
+  gglist[[ii]]<-network_plot(networkslist,name1="COVID",name2="Healthy", fileName=paste0("rank_",ii, "_", pathway, "_COVID_Healthy_Diff"))
 }
 ```
 ```{r eval = TRUE}
 for(ii in 3:3){
   pathway<-names(pvalues)[ii]  
   networkslist<-network_seq_correlation(geneset[[pathway]],pbmc_B.sub,genes_selected,"COVID","Healthy")
-  gglist[[ii]]<-network_plot(networkslist,name1="COVID",name2="Healthy", fileName=paste0("rank_",ii, "_", pathway, "_positivePNH_Healthy_Diff"))
+  gglist[[ii]]<-network_plot(networkslist,name1="COVID",name2="Healthy", fileName=paste0("rank_",ii, "_", pathway, "_COVID_Healthy_Diff"))
 }
 ```
 ```{r eval = TRUE}
 for(ii in 4:4){
   pathway<-names(pvalues)[ii]  
   networkslist<-network_seq_correlation(geneset[[pathway]],pbmc_B.sub,genes_selected,"COVID","Healthy")
-  gglist[[ii]]<-network_plot(networkslist,name1="COVID",name2="Healthy", fileName=paste0("rank_",ii, "_", pathway, "_positivePNH_Healthy_Diff"))
+  gglist[[ii]]<-network_plot(networkslist,name1="COVID",name2="Healthy", fileName=paste0("rank_",ii, "_", pathway, "_COVID_Healthy_Diff"))
 }
 ```
 
