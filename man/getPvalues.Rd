@@ -11,6 +11,9 @@ getPvalues(cor_data_score, cor_data_perm_list)
 
 \item{cor_data_perm_list}{permutation results}
 }
+\value{
+A numeric vector named by pathways
+}
 \description{
 Calculate p values with permutation
 }

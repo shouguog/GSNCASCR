@@ -2,7 +2,7 @@
 % Please edit documentation in R/functions_2.R
 \name{network_seq_correlation}
 \alias{network_seq_correlation}
-\title{calculate the network of gene sets}
+\title{calculate the network of one pathway}
 \usage{
 network_seq_correlation(
   pathway,
@@ -14,8 +14,18 @@ network_seq_correlation(
 )
 }
 \arguments{
-\item{pathway}{a gene list}
+\item{pathway}{a pathway name}
+
+\item{seuratObj}{A Seurat Oject, with status in meta.data}
+
+\item{genes_selected}{Gene selected to be analyzed}
+
+\item{type1}{the first type (defined in status) for analysis}
+
+\item{type2}{the second type (defined in status) for analysis}
+
+\item{list}{with two networks}
 }
 \description{
-calculate the network of gene sets
+calculate the network of one pathway
 }

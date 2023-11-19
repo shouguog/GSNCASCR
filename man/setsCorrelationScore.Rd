@@ -11,6 +11,9 @@ setsCorrelationScore(setInd, corDiff)
 
 \item{corDiff}{matrix of differential correlation}
 }
+\value{
+numeric value
+}
 \description{
 compute set correlation score with SUM method
 }

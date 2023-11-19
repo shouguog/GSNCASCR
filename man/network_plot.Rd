@@ -13,6 +13,15 @@ network_plot(
 }
 \arguments{
 \item{networklist}{list with two networks}
+
+\item{name1}{the first status for analysis}
+
+\item{name2}{the second status for analysis}
+
+\item{filename}{png file name to save the networks, no figure generated when fileName is NULL}
+}
+\value{
+gglist with three ggplot2 objects
 }
 \description{
 Do permutation for calculate score

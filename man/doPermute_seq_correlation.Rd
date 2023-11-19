@@ -16,7 +16,24 @@ doPermute_seq_correlation(
 )
 }
 \arguments{
+\item{seuratObj}{A Seurat Oject, with status in meta.data}
+
+\item{genes_selected}{Gene selected to be analyzed}
+
+\item{type1}{the first type (defined in status) for analysis}
+
+\item{type2}{the second type (defined in status) for analysis}
+
+\item{returnType}{return network or network score}
+
+\item{seedPerm}{seed for permutaion}
+
+\item{scoreMethod}{method of score pathway difference (sum or GSNCA)}
+
 \item{setInd}{list of genesetsets}
+}
+\value{
+list of pathway scores
 }
 \description{
 Do permutation for calculate score

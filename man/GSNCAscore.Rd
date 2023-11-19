@@ -11,6 +11,9 @@ GSNCAscore(setInd, twonetworks)
 
 \item{twonetworks}{list of two networks}
 }
+\value{
+numeric value
+}
 \description{
 compute the score with GSCNA approach
 }
