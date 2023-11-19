@@ -8,6 +8,7 @@ library(GSEABase)
 #'
 #' @param setInd list of geneset
 #' @param corDiff matrix of differential correlation
+#' @returns numeric value
 setsCorrelation = function(setInd,corDiff){
   setInd<-setInd[setInd %in% rownames(corDiff)]
   #cat(setInd)
@@ -18,6 +19,7 @@ setsCorrelation = function(setInd,corDiff){
 #'
 #' @param setInd list of geneset
 #' @param corDiff matrix of differential correlation
+#' @returns numeric value
 setsCorrelationScore = function(setInd,corDiff){
   ###Normalized corDiff to zero mean
   corDiff<-corDiff-mean(corDiff)
@@ -29,7 +31,7 @@ setsCorrelationScore = function(setInd,corDiff){
 #'
 #' @param setInd list of geneset
 #' @param twonetworks list of two networks
-
+#' @returns numeric value
 ## Calculate with two networks
 GSNCAscore = function(setInd, twonetworks){
   cormat1<-twonetworks[[1]]
@@ -48,13 +50,14 @@ GSNCAscore = function(setInd, twonetworks){
 #' Do permutation for calculate score
 #'
 #' @param setInd list of genesetsets
-#' @param seuratObj
-#' @param genes_selected
-#' @param type1
-#' @param type2
-#' @param returnType
-#' @param seedPerm
-#' @param scoreMethod
+#' @param seuratObj A Seurat Oject, with status in meta.data
+#' @param genes_selected Gene selected to be analyzed
+#' @param type1 the first type (defined in status) for analysis
+#' @param type2 the second type (defined in status) for analysis
+#' @param returnType return network or network score
+#' @param seedPerm seed for permutaion
+#' @param scoreMethod method of score pathway difference (sum or GSNCA)
+#' @returns list of pathway scores
 
 doPermute_seq_correlation = function(sets,seuratObj,genes_selected,type1,type2, returnType="network", seedPerm=0, scoreMethod="sum"){
   metaData<-seuratObj@meta.data
@@ -99,12 +102,14 @@ doPermute_seq_correlation = function(sets,seuratObj,genes_selected,type1,type2, 
 #' calculate score of list of gene sets
 #'
 #' @param setInd list of genesetsets
-#' @param seuratObj
-#' @param genes_selected
-#' @param type1
-#' @param type2
-#' @param returnType
-#' @param scoreMethod
+#' @param seuratObj A Seurat Oject, with status in meta.data
+#' @param genes_selected Gene selected to be analyzed
+#' @param type1 the first type (defined in status) for analysis
+#' @param type2 the second type (defined in status) for analysis
+#' @param returnType return network or network score
+#' @param seedPerm seed for permutaion
+#' @param scoreMethod method of score pathway difference (sum or GSNCA)
+#' @returns list of pathway scores
 calculate_seq_correlation = function(sets,seuratObj,genes_selected,type1,type2, returnType="network", scoreMethod="sum"){
   ###Get the metaData
   if(length(type1)!=length(type2)){
@@ -137,16 +142,14 @@ calculate_seq_correlation = function(sets,seuratObj,genes_selected,type1,type2, 
   }
 }
 
-#' calculate the network of gene sets
+#' calculate the network of one pathway
 #'
-#' @param pathway a gene list
-#' @param seuratObj
-#' @param genes_selected
-#' @param type1
-#' @param type2
-#' @param returnType
-#' @param seedPerm
-#' @param scoreMethod
+#' @param pathway a pathway name
+#' @param seuratObj A Seurat Oject, with status in meta.data
+#' @param genes_selected Gene selected to be analyzed
+#' @param type1 the first type (defined in status) for analysis
+#' @param type2 the second type (defined in status) for analysis
+#' @param list with two networks
 
 network_seq_correlation = function(pathway,seuratObj,genes_selected,type1,type2, returnType="network"){
   ###Get the metaData
@@ -174,9 +177,10 @@ network_seq_correlation = function(pathway,seuratObj,genes_selected,type1,type2,
 #' Do permutation for calculate score
 #'
 #' @param networklist list with two networks
-#' @param filename
-#' @param name1
-#' @param name2
+#' @param filename png file name to save the networks, no figure generated when fileName is NULL
+#' @param name1 the first status for analysis
+#' @param name2 the second status for analysis
+#' @returns gglist with three ggplot2 objects
 
 network_plot = function(networklist,name1="status1",name2="status2", fileName=NULL){
   CSCORE_type1_coexp<-networklist[[1]]
@@ -227,13 +231,14 @@ network_plot = function(networklist,name1="status1",name2="status2", fileName=NU
 #' Run permutation for calculate score
 #'
 #' @param setInd list of genesetsets
-#' @param seuratObj
-#' @param genes_selected
-#' @param type1
-#' @param type2
-#' @param returnType
-#' @param seedPerm
-#' @param scoreMethod
+#' @param seuratObj A Seurat Oject, with status in meta.data
+#' @param genes_selected Gene selected to be analyzed
+#' @param type1 the first type (defined in status) for analysis
+#' @param type2 the second type (defined in status) for analysis
+#' @param returnType return network or network score
+#' @param seedPerm seed for permutaion
+#' @param scoreMethod method of score pathway difference (sum or GSNCA)
+#' @returns list of list of pathway scores
 
 runPermute_seq_correlation = function(sets,seuratObj,genes_selected,type1,type2, ncores=1,nPermute=6, returnType="network", scoreMethod="sum"){
   if(ncores==1){
@@ -308,6 +313,7 @@ runPermute_seq_correlation = function(sets,seuratObj,genes_selected,type1,type2,
 #'
 #' @param cor_data_score score of pathways between two groups
 #' @param cor_data_perm_list permutation results
+#' @returns A numeric vector named by pathways
 
 getPvalues = function(cor_data_score,cor_data_perm_list){
   pvalues<-c()
@@ -328,6 +334,7 @@ getPvalues = function(cor_data_score,cor_data_perm_list){
 #'
 #' @param cor_data_score score of pathways between two groups
 #' @param cor_data_perm_list permutation results
+#' @returns A numeric vector named by pathways
 getPvaluesTTest = function(cor_data_score,cor_data_perm_list){
   pvalues<-c()
   for(pathway in names(cor_data_score)){
@@ -337,6 +344,25 @@ getPvaluesTTest = function(cor_data_score,cor_data_perm_list){
       scores<-c(scores, cor_data_perm_list[[ii]][pathway])
     }
     pvalues<-c(pvalues, ttest<-t.test(scores-score, alternative = "less")$p.value)
+  }
+  names(pvalues)<-names(cor_data_score)
+  pvalues
+}
+
+#' Calculate z score with permutation
+#'
+#' @param cor_data_score score of pathways between two groups
+#' @param cor_data_perm_list permutation results
+#' @returns A numeric vector named by pathways
+getZscoreTTest = function(cor_data_score,cor_data_perm_list){
+  pvalues<-c()
+  for(pathway in names(cor_data_score)){
+    score<-cor_data_score[pathway]
+    scores<-c()
+    for(ii in 1:length(cor_data_perm_list)){
+      scores<-c(scores, cor_data_perm_list[[ii]][pathway])
+    }
+    pvalues<-c(pvalues, ttest<-t.test(scores-score, alternative = "less")$statistic)
   }
   names(pvalues)<-names(cor_data_score)
   pvalues
