@@ -16,6 +16,7 @@ setsCorrelation = function(setInd,corDiff){
 }
 
 #' compute set correlation score with SUM method
+#' This method is the implement of GSCA
 #'
 #' @param setInd list of geneset
 #' @param corDiff matrix of differential correlation
@@ -208,11 +209,11 @@ network_plot = function(networklist,name1="status1",name2="status2", fileName=NU
 
   #and here’s one that’s polished to look nicer:
   gg1<-ggraph(graph_cors) + geom_edge_link(aes(edge_alpha = abs(r1), edge_width = abs(r2), color = r1)) + guides(edge_alpha = "none", edge_width = "none")
-  gg1<-gg1 + scale_edge_colour_gradientn(limits = c(-1, 1), colors = c("dodgerblue2","firebrick2")) + geom_node_point(color = "white", size = 5)
+  gg1<-gg1 + scale_edge_colour_gradientn(limits = c(-1, 1), colors = c("dodgerblue2", "white","firebrick2")) + geom_node_point(color = "white", size = 5)
   gg1<-gg1 + geom_node_text(aes(label = name), repel = TRUE) + labs(title = name1) + theme_bw()
 
   gg2<-ggraph(graph_cors) + geom_edge_link(aes(edge_alpha = abs(r2), edge_width = abs(r2), color = r2)) + guides(edge_alpha = "none", edge_width = "none")
-  gg2<-gg2 + scale_edge_colour_gradientn(limits = c(-1, 1), colors = c("dodgerblue2","firebrick2")) + geom_node_point(color = "white", size = 5)
+  gg2<-gg2 + scale_edge_colour_gradientn(limits = c(-1, 1), colors = c("dodgerblue2", "white","firebrick2")) + geom_node_point(color = "white", size = 5)
   gg2<-gg2 + geom_node_text(aes(label = name), repel = TRUE) + labs(title = name2)  + theme_bw()
 
   ggDiff<-ggraph(graph_cors) + geom_edge_link(aes(edge_alpha = abs(r2), edge_width = abs(r2), color = (r1-r2))) + guides(edge_alpha = "none", edge_width = "none")
