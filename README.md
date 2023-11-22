@@ -5,7 +5,7 @@ GSNCASCR is a R package for pathway level co-expression analysis from single cel
 
 This [tutorial](https://htmlpreview.github.io/?https://github.com/shouguog/GSNCASCR/blob/main/vignette/COVIDBcell.html) introduces how to use the GSNCASCR R package, and is applied on B cells of COVID and Healthy donors.
 <br>
-This [tutorial](https://htmlpreview.github.io/?https://github.com/shouguog/GSNCASCR/blob/main/vignette/COVIDBcell_networAnalysis.html) introduces how to use the GSNCASCR R package for network analysis.
+This [tutorial](https://htmlpreview.github.io/?https://github.com/shouguog/GSNCASCR/blob/main/vignette/COVIDBcell_networkAnalysis.html) introduces how to use the GSNCASCR R package for network analysis.
 <br>
 
 We use the single cell RNA-sequencing data on PBMC from COVID patients and healthy controls from Nature Medicine volume 26, pages1070–1076 (2020). The data is available at https://hosted-matrices-prod.s3-us-west-2.amazonaws.com/Single_cell_atlas_of_peripheral_immune_response_to_SARS_CoV_2_infection-25/blish_covid.seu.rds
