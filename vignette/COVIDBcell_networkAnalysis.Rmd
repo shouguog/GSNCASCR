@@ -103,7 +103,7 @@ Plot the third pathway.
 Network Visualiation
 
 ```{r eval = TRUE}
-weightCor<-network_weight (networkslist,name1="COVID",name2="Healthy", fileName=paste0("rank_",ii, "_", pathway, "_COVID_Healthy_Diff"))
+weightCor<-network_weight (networkslist,name1="COVID",name2="Healthy")
 ```
 
 # 6. Show results of degree
@@ -119,5 +119,66 @@ degree_r12$absr2<-aggregate(absr2 ~ gene, degreeData, sum)$absr2
 degree_r12$sep2<-"  "
 degree_r12$absr12<-aggregate(absr12 ~ gene, degreeData, sum)$absr12
 degree_r12<-degree_r12[order(degree_r12$absr12, decreasing = TRUE),]
-knitr::kable(degree_r12, format="html", col.names = c("GENE", "weight1", "", "weight2", "", "WeightDifference"))
+knitr::kable(degree_r12[1:20,], format="html", col.names = c("GENE", "weight1", "  ", "weight2", "  ", "WeightDifference"), row.names=FALSE)
+```
+
+# 7. Separate increased and decresed coexpression
+
+```{r}
+weightCorPositive<-weightCor[weightCor$r12>0.4,]
+graph_cors_Positive <- weightCorPositive %>% filter((abs(r1)+abs(r2)) > .6) %>% graph_from_data_frame(directed = FALSE)
+
+gg1<-ggraph(graph_cors_Positive) + geom_edge_link(aes(edge_alpha = abs(r1), edge_width = abs(r2), color = r12)) + guides(edge_alpha = "none", edge_width = "none") + xlim(0, 20)
+gg1<-gg1 + scale_edge_colour_gradientn(limits = c(-1, 1), colors = c("dodgerblue2", "white","firebrick2")) + geom_node_point(color = "white", size = 5)
+gg1<-gg1 + geom_node_text(aes(label = name), repel = TRUE) + labs(title = "Increase") + theme_bw()
+
+weightCorNegative<-weightCor[weightCor$r12<(-0.4),]
+graph_cors_Negative <- weightCorNegative %>% filter((abs(r1)+abs(r2)) > .6) %>% graph_from_data_frame(directed = FALSE)
+gg2<-ggraph(graph_cors_Negative) + geom_edge_link(aes(edge_alpha = abs(r2), edge_width = abs(r2), color = r12)) + guides(edge_alpha = "none", edge_width = "none")
+gg2<-gg2 + scale_edge_colour_gradientn(limits = c(-1, 1), colors = c("dodgerblue2", "white","firebrick2")) + geom_node_point(color = "white", size = 5)
+gg2<-gg2 + geom_node_text(aes(label = name), repel = TRUE) + labs(title = "Decreased")  + theme_bw()
+
+```
+
+# 8. Increased Coexpression Network
+
+```{r echo=FALSE, fig.width=16, fig.height=16}
+print(gg1)
+```
+
+Show results of degree
+
+```{r}
+degreeData<-data.frame(gene=c(weightCorPositive$x, weightCorPositive$y), r1=c(weightCorPositive$r1, weightCorPositive$r1), r2=c(weightCorPositive$r2, weightCorPositive$r2), r12=c(weightCorPositive$r12, weightCorPositive$r12))
+degreeData$absr1<-round(abs(degreeData$r1),2)
+degreeData$absr2<-round(abs(degreeData$r2),2)
+degreeData$absr12<-round(abs(degreeData$r12),2)
+degree_r12<-aggregate(absr1 ~ gene, degreeData, sum)
+degree_r12$sep1<-"  "
+degree_r12$absr2<-aggregate(absr2 ~ gene, degreeData, sum)$absr2
+degree_r12$sep2<-"  "
+degree_r12$absr12<-aggregate(absr12 ~ gene, degreeData, sum)$absr12
+degree_r12<-degree_r12[order(degree_r12$absr12, decreasing = TRUE),]
+knitr::kable(degree_r12[1:20,], format="html", col.names = c("GENE", "weight1", "  ", "weight2", "  ", "WeightDifference"), row.names=FALSE)
+```
+# 9. Decreased Coexpression Network
+
+```{r echo=FALSE, fig.width=16, fig.height=16}
+print(gg2)
+```
+
+Show results of degree
+
+```{r}
+degreeData<-data.frame(gene=c(weightCorNegative$x, weightCorNegative$y), r1=c(weightCorNegative$r1, weightCorNegative$r1), r2=c(weightCorNegative$r2, weightCorNegative$r2), r12=c(weightCorNegative$r12, weightCorNegative$r12))
+degreeData$absr1<-round(abs(degreeData$r1),2)
+degreeData$absr2<-round(abs(degreeData$r2),2)
+degreeData$absr12<-round(abs(degreeData$r12),2)
+degree_r12<-aggregate(absr1 ~ gene, degreeData, sum)
+degree_r12$sep1<-"  "
+degree_r12$absr2<-aggregate(absr2 ~ gene, degreeData, sum)$absr2
+degree_r12$sep2<-"  "
+degree_r12$absr12<-aggregate(absr12 ~ gene, degreeData, sum)$absr12
+degree_r12<-degree_r12[order(degree_r12$absr12, decreasing = TRUE),]
+knitr::kable(degree_r12[1:20,], format="html", col.names = c("GENE", "weight1", "  ", "weight2", "  ", "WeightDifference"), row.names=FALSE)
 ```
