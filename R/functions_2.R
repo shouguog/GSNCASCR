@@ -228,6 +228,41 @@ network_plot = function(networklist,name1="status1",name2="status2", fileName=NU
   ####Need copy edit
 }
 
+#' Do permutation for calculate score
+#'
+#' @param networklist list with two networks
+#' @param filename png file name to save the networks, no figure generated when fileName is NULL
+#' @param name1 the first status for analysis
+#' @param name2 the second status for analysis
+#' @returns network weights
+
+network_weight = function(networklist,name1="status1",name2="status2", fileName=NULL){
+  CSCORE_type1_coexp<-networklist[[1]]
+  CSCORE_type2_coexp<-networklist[[2]]
+  ####Need copy edit
+  library(ggraph)
+  library(dplyr)
+  library(igraph)
+  gene1<-c()
+  gene2<-c()
+  r1<-c()
+  r2<-c()
+  for(ii in 1:(dim(CSCORE_type1_coexp)[1]-1)){
+    for(jj in (ii+1):dim(CSCORE_type1_coexp)[1]){
+      gene1<-c(gene1, rownames(CSCORE_type1_coexp)[ii])
+      gene2<-c(gene2, rownames(CSCORE_type1_coexp)[jj])
+      r1<-c(r1, as.numeric(CSCORE_type1_coexp[ii,jj]))
+      r2<-c(r2, as.numeric(CSCORE_type2_coexp[ii,jj]))
+    }
+  }
+  network_cors_1<-data.frame(x=gene1, y=gene2, r1=r1, r2=r2)
+  network_cors_1$r12<-network_cors_1$r1-network_cors_1$r2
+  network_cors_1$r12[abs(network_cors_1$r12)<0.2]<-0
+  #graph_cors <- network_cors_1 %>% filter((abs(r1)+abs(r2)) > .6) %>% graph_from_data_frame(directed = FALSE)
+  #graph_cors
+  network_cors_1
+  ####Need copy edit
+}
 
 #' Run permutation for calculate score
 #'
