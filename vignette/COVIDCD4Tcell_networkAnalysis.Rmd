@@ -1,0 +1,123 @@
+---
+title: "Vignette Title"
+author:
+- name: Shouguo Gao
+  affiliation: NHLBI/NIH
+- name: Neal S. Young
+  affiliation: NHLBI/NIH
+  email: shouguo.gao@nih.gov
+output:
+  BiocStyle::html_document
+abstract: |
+  Description of your vignette
+vignette: |
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+This vignette shows an example of applying pathway level to infer cell-type-specific co-expression networks and extracting co-expressed gene modules that are enriched for biological functions in cell types.
+
+# 1. Load packages and data
+
+```{r setup, warning = FALSE, message = FALSE}
+library(CSCORE)
+library(Seurat)
+library(ggraph)
+library(gridExtra)
+source("../R/functions_2.R")
+```
+
+In this vignette, we use the single cell RNA-sequencing data on Peripheral blood mononuclear cells (PBMC) from COVID patients and healthy controls from [Wilk et al.](https://www.nature.com/articles/s41591-020-0944-y), which were also studied in our [manuscript](https://www.biorxiv.org/content/10.1101/2022.12.13.520181v1). This data set can be downloaded via the following bash script
+
+```{r eval = TRUE}
+#wget https://hosted-matrices-prod.s3-us-west-2.amazonaws.com/Single_cell_atlas_of_peripheral_immune_response_to_SARS_CoV_2_infection-25/blish_covid.seu.rds
+cat("dowload")
+```
+
+After downloading blish_covid.seu.rds, we load it into the R session
+
+```{r eval = TRUE}
+####Load the gene set and convert into list
+geneset<-geneIds(getGmt("../data/h.all.v2023.2.Hs.symbols.gmt"))
+pbmc <- readRDS('../data/blish_covid.seu.rds')
+# Use the original UMI counts stored in Assay 'RNA'
+DefaultAssay(pbmc) <- 'RNA'
+```
+
+# 2. Select cell types and gene sets to study
+
+In this example, we focus on CD4T cells and infer the CD4T cell-specific co-expression network.
+
+```{r eval = TRUE}
+pbmc_CD4T = pbmc[,pbmc$cell.type.coarse %in% 'CD4 T']
+```
+
+Depending on the biological question of interest, one may choose to study the co-expression network for any gene set. Here, we chose to infer the co-expression network for the genes with meaningful expression levels in B cells (top 5000 among 26361 genes). There are several reasons for our choice:
+
+1.  All genes with moderate to high expression levels provides a comprehensive and unbiased set of genes that could have meaningful biological functions in a cell type.
+
+2.  If the genes have much lower expression levels, it would be statistically more challenging and biologically less interesting to infer their co-expressions, as these genes might have almost all UMI counts equal to 0.
+
+In general, it will be up to the users's choice to select the gene sets to study. We recommend choosing the gene sets that are of interest to your application.
+
+```{r eval = TRUE}
+mean_exp = rowMeans(pbmc_CD4T@assays$RNA@counts/pbmc_CD4T$nCount_RNA)
+genes_selected = names(sort.int(mean_exp, decreasing = T))[1:5000]
+```
+
+# 3. Run `Pathway Level` to infer cell-type-specific co-expression network on the specified gene set
+
+We further subset the CD4T cells to those from healthy control subjects in order to study B-cell specific co-expression network among healthy control CD4T cells.
+
+```{r eval = TRUE}
+metaData<-pbmc_CD4T@meta.data
+metaData_Healthy<-metaData[metaData$Status=="Healthy",]
+metaData_COVID<-metaData[metaData$Status=="COVID",]
+set.seed(666);metaData_COVID<-metaData_COVID[sample(1:dim(metaData_COVID)[1],dim(metaData_Healthy)[1]),]
+```
+
+# 4. Get the Subset of two groups
+
+```{r eval = TRUE}
+pbmc_CD4T.sub<-subset(pbmc_CD4T, cells=c(rownames(metaData_Healthy), rownames(metaData_COVID)))
+rm(pbmc_CD4T)
+```
+Network Visualiation
+
+```{r eval = TRUE}
+pathway<-"HALLMARK_INTERFERON_GAMMA_RESPONSE"  
+networkslist<-network_seq_correlation(geneset[[pathway]],pbmc_CD4T.sub,genes_selected,"COVID","Healthy")
+gglist<-network_plot(networkslist,name1="COVID",name2="Healthy")
+
+```
+# 5. Show plots
+
+Plot the third pathway.
+
+```{r, fig.width = 20, fig.height = 8}
+  library(ggraph)
+  gridExtra::grid.arrange(gglist$gg1, gglist$gg2, gglist$ggDiff, ncol=3)
+```
+
+Network Visualiation
+
+```{r eval = TRUE}
+weightCor<-network_weight (networkslist,name1="COVID",name2="Healthy")
+```
+
+# 6. Show results of degree
+
+```{r}
+degreeData<-data.frame(gene=c(weightCor$x, weightCor$y), r1=c(weightCor$r1, weightCor$r1), r2=c(weightCor$r2, weightCor$r2), r12=c(weightCor$r12, weightCor$r12))
+degreeData$absr1<-round(abs(degreeData$r1),2)
+degreeData$absr2<-round(abs(degreeData$r2),2)
+degreeData$absr12<-round(abs(degreeData$r12),2)
+degree_r12<-aggregate(absr1 ~ gene, degreeData, sum)
+degree_r12$sep1<-"  "
+degree_r12$absr2<-aggregate(absr2 ~ gene, degreeData, sum)$absr2
+degree_r12$sep2<-"  "
+degree_r12$absr12<-aggregate(absr12 ~ gene, degreeData, sum)$absr12
+degree_r12<-degree_r12[order(degree_r12$absr12, decreasing = TRUE),]
+knitr::kable(degree_r12[1:20,], format="html", col.names = c("GENE", "weight1", "  ", "weight2", "  ", "WeightDifference"), row.names=FALSE)
+```
